@@ -1,101 +1,159 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { MapPin, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleCompare = async () => {
+    if (!address1 || !address2) {
+      setError("Both addresses are required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch("/api/compare-addresses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ address1, address2 }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to compare addresses");
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Address Comparison Tool</h1>
+          <p className="text-muted-foreground">
+            Compare two addresses to determine if they refer to the same location
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Enter Addresses</CardTitle>
+            <CardDescription>
+              Provide two addresses to compare using Gemini AI
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="address1" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" /> First Address
+              </Label>
+              <Input
+                id="address1"
+                placeholder="123 Main St, Anytown, CA 12345"
+                value={address1}
+                onChange={(e) => setAddress1(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address2" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" /> Second Address
+              </Label>
+              <Input
+                id="address2"
+                placeholder="123 Main Street, Anytown, California 12345"
+                value={address2}
+                onChange={(e) => setAddress2(e.target.value)}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleCompare} 
+              disabled={loading || !address1 || !address2}
+              className="w-full"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Comparing...
+                </>
+              ) : (
+                "Compare Addresses"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {result && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Comparison Result
+                <Badge variant={result.match ? "default" : "secondary"}>
+                  {result.match ? "Match" : "No Match"}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium">Confidence Level</span>
+                  <span className="text-sm font-medium">{Math.round(result.confidence * 100)}%</span>
+                </div>
+                <Progress value={result.confidence * 100} className="h-2" />
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2">Explanation</h3>
+                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                  {result.explanation}
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-muted p-3 rounded-md">
+                  <p className="text-xs text-muted-foreground mb-1">Address 1</p>
+                  <p className="text-sm">{address1}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <p className="text-xs text-muted-foreground mb-1">Address 2</p>
+                  <p className="text-sm">{address2}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
